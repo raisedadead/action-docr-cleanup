@@ -1,0 +1,21 @@
+name: 'DigitalOcean Registry Cleanup Action'
+description: 'Deletes tags older than a specified number of days from a DigitalOcean container registry'
+author: 'Your Name'
+inputs:
+  repository_name:
+    description: 'Name of the DigitalOcean container registry repository'
+    required: true
+  dry_run:
+    description: 'If set to true, it will display tags to be deleted without actually deleting them'
+    required: false
+    default: 'false'
+  days:
+    description: 'Number of days. Tags older than these many days will be deleted'
+    required: false
+    default: '2'
+
+runs:
+  using: 'composite'
+  steps:
+    - run: bash entrypoint.sh -n ${{ inputs.days }} ${{ inputs.repository_name }} ${{ inputs.dry_run }}
+      shell: bash
