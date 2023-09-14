@@ -36,3 +36,42 @@ Number of days. Tags older than these many days will be deleted. Default is "2".
   dry_run: 'true'
   days: '7'
 ```
+
+## Manual run:
+
+Assuming you have
+[doctl installed](https://docs.digitalocean.com/reference/doctl/) and
+authenticated with your user, you can run the following commands:
+
+```bash
+doctl registry login --expiry-seconds 1200
+```
+
+For help on the script:
+
+```bash
+./entrypoint.sh -h
+```
+
+To run the script in dry-run mode:
+
+```bash
+./entrypoint.sh -d -n <number of days> <repository-name>
+```
+
+To run the script:
+
+```bash
+./entrypoint.sh -n <number of days> <repository-name>
+```
+
+example:
+
+```bash
+./entrypoint.sh -n 1 myapp
+```
+
+## License
+
+Software: The software as it is licensed under the [MIT](LICENSE) License,
+please feel free to extend, re-use, share the code.
