@@ -17,5 +17,5 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - run: bash entrypoint.sh -n ${{ inputs.days }} ${{ inputs.repository_name }} ${{ inputs.dry_run }}
+    - run: bash entrypoint.sh -n ${{ inputs.days }} ${{ inputs.repository_name }} ${{ inputs.dry_run == 'true' && '-d' || '' }}
       shell: bash
