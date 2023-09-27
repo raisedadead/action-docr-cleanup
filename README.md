@@ -32,9 +32,9 @@ Number of days. Tags older than these many days will be deleted. Default is "2".
 
 - uses: raisedadead/action-docr-cleanup@v1
   with:
-  repository_name: 'your-repository-name'
-  dry_run: 'true'
-  days: '7'
+    repository_name: 'your-repository-name'
+    dry_run: 'true'
+    days: '7'
 ```
 
 ## Manual run:
