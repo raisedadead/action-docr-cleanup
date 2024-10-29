@@ -1,24 +1,37 @@
-name: 'DigitalOcean Registry Cleanup Action'
-description: 'Deletes tags older than a specified number of days from a DigitalOcean container registry'
-author: 'Mrugesh Mohapatra'
+name: "DigitalOcean Registry Cleanup Action"
+description: "Deletes tags from a DigitalOcean container registry based on age and count criteria"
+author: "Mrugesh Mohapatra"
 branding:
-  icon: 'trash'
-  color: 'red'
+  icon: "trash"
+  color: "red"
 inputs:
   repository_name:
-    description: 'Name of the DigitalOcean container registry repository'
+    description: "Name of the DigitalOcean container registry repository"
     required: true
   dry_run:
-    description: 'If set to true, it will display tags to be deleted without actually deleting them'
+    description: "If true, shows what would be deleted without making any changes"
     required: false
-    default: 'false'
+    default: "false"
   days:
-    description: 'Number of days. Tags older than these many days will be deleted'
+    description: "Delete tags older than these many days"
     required: false
-    default: '2'
+    default: "2"
+  bypass_safety:
+    description: "Bypass the safety check that prevents deletion when no recent images exist"
+    required: false
+    default: "false"
+  keep_last:
+    description: "Number of most recent tags to keep, regardless of age"
+    required: false
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
-    - run:  $GITHUB_ACTION_PATH/entrypoint.sh ${{ inputs.dry_run == 'true' && '-d' || '' }} -n ${{ inputs.days }} ${{ inputs.repository_name }} 
+    - run: |
+        $GITHUB_ACTION_PATH/entrypoint.sh \
+        ${{ inputs.dry_run == 'true' && '-d' || '' }} \
+        -n ${{ inputs.days }} \
+        ${{ inputs.bypass_safety == 'true' && '-b' || '' }} \
+        ${{ inputs.keep_last && format('--keep-last {0}', inputs.keep_last) || '' }} \
+        ${{ inputs.repository_name }}
       shell: bash
