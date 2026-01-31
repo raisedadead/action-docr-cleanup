@@ -1,17 +1,9 @@
 name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (e.g., v1.0.0, v1.2.3)'
-        required: true
-        type: string
-      prerelease:
-        description: 'Mark as pre-release'
-        required: false
-        default: false
-        type: boolean
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -22,92 +14,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Validate version format
-        id: validate
-        run: |
-          VERSION="${{ inputs.version }}"
-
-          # Ensure version starts with 'v'
-          if [[ ! "$VERSION" =~ ^v ]]; then
-            VERSION="v$VERSION"
-          fi
-
-          # Validate semantic version format (vMAJOR.MINOR.PATCH)
-          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Invalid version format. Expected format: vX.Y.Z (e.g., v1.0.0)"
-            exit 1
-          fi
-
-          # Extract major and minor versions for alias tags
-          MAJOR=$(echo "$VERSION" | sed 's/v//;s/\..*//')
-          MINOR=$(echo "$VERSION" | sed 's/v//;s/\.[0-9]*$//')
-
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "major=v$MAJOR" >> "$GITHUB_OUTPUT"
-          echo "minor=v$MINOR" >> "$GITHUB_OUTPUT"
-
-          echo "Full version: $VERSION"
-          echo "Major alias: v$MAJOR"
-          echo "Minor alias: v$MINOR"
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Check if tag already exists
-        run: |
-          if git rev-parse "${{ steps.validate.outputs.version }}" >/dev/null 2>&1; then
-            echo "::error::Tag ${{ steps.validate.outputs.version }} already exists"
-            exit 1
-          fi
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Create version tag
-        run: |
-          git tag -a "${{ steps.validate.outputs.version }}" -m "Release ${{ steps.validate.outputs.version }}"
-          git push origin "${{ steps.validate.outputs.version }}"
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.validate.outputs.version }}
-          name: ${{ steps.validate.outputs.version }}
           generate_release_notes: true
-          prerelease: ${{ inputs.prerelease }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update major version tag
-        run: |
-          git tag -fa "${{ steps.validate.outputs.major }}" -m "Update ${{ steps.validate.outputs.major }} tag to ${{ steps.validate.outputs.version }}"
-          git push origin "${{ steps.validate.outputs.major }}" --force
-
-      - name: Update minor version tag
-        run: |
-          git tag -fa "${{ steps.validate.outputs.minor }}" -m "Update ${{ steps.validate.outputs.minor }} tag to ${{ steps.validate.outputs.version }}"
-          git push origin "${{ steps.validate.outputs.minor }}" --force
-
-      - name: Summary
-        run: |
-          echo "## Release Summary" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Successfully released **${{ steps.validate.outputs.version }}**" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### Tags Updated" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Tag | Points To |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|-----|-----------|" >> "$GITHUB_STEP_SUMMARY"
-          echo "| \`${{ steps.validate.outputs.version }}\` | $(git rev-parse HEAD) |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| \`${{ steps.validate.outputs.major }}\` | $(git rev-parse HEAD) |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| \`${{ steps.validate.outputs.minor }}\` | $(git rev-parse HEAD) |" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### Usage" >> "$GITHUB_STEP_SUMMARY"
-          echo "\`\`\`yaml" >> "$GITHUB_STEP_SUMMARY"
-          echo "- uses: ${{ github.repository }}@${{ steps.validate.outputs.major }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "# or" >> "$GITHUB_STEP_SUMMARY"
-          echo "- uses: ${{ github.repository }}@${{ steps.validate.outputs.version }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Update major/minor version tags
+        uses: haya14busa/action-update-semver@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
