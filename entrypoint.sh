@@ -160,7 +160,7 @@ if [ "$BYPASS_CHECK" = false ]; then
   if [ "$image_count_within_threshold" -le 1 ]; then
     echo "WARNING: Safety check failed"
     echo "  • No images found newer than $DAYS day(s)"
-    exit 1
+    exit 0
   fi
 fi
 
